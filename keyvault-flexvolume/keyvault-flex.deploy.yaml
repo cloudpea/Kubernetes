@@ -1,0 +1,57 @@
+#
+# Deploy the KeyVault-FlexVolume in the Kubernetes Cluster.
+#
+
+# ------------------- Seceret ------------------- #
+
+apiVersion: v1
+kind: Secret
+type: azure/kv
+metadata:
+  name: kvcreds
+  namespace: default
+data:
+  # Requires Base64 Encoded Values
+  clientid: PENoYW5nZV9NZT4=
+  clientsecret: PENoYW5nZV9NZT4=
+
+---
+
+# ------------------- DaemonSet ------------------- #
+
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  labels:
+    app: keyvault-flexvolume
+  name: keyvault-flexvolume
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        app: keyvault-flexvolume
+    spec:
+      containers:
+      - name: flexvol-driver-installer
+        image: "mcr.microsoft.com/k8s/flexvolume/keyvault-flexvolume:v0.0.6"
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 50m
+            memory: 10Mi
+          limits:
+            cpu: 50m
+            memory: 10Mi
+        env:
+        - name: TARGET_DIR
+          value: "/etc/kubernetes/volumeplugins"
+        volumeMounts:
+        - mountPath: "/etc/kubernetes/volumeplugins"
+          name: volplugins
+      volumes:
+      - hostPath:
+          path: "/etc/kubernetes/volumeplugins" 
+        name: volplugins
+      nodeSelector:
+        beta.kubernetes.io/os: linux
