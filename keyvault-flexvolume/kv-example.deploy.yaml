@@ -58,7 +58,8 @@ spec:
       containers:
       - name: kv-example
         # !CHANGE THIS! To your real image reference for the container 
-        image: busybox
+        image: nginx
+        command: ["printenv"]
         ports:
         - containerPort: 80
         livenessProbe:
@@ -82,9 +83,11 @@ spec:
           secretRef:
             name: kvcreds
           options:
-            keyvaultname: "<Change_Me>"                 # the name of the KeyVault
-            keyvaultobjectnames: secret1;cert1;secret2  # list of KeyVault object names (semi-colon separated)
-            keyvaultobjecttypes: secret;cert;secret     # list of KeyVault object types: secret, key or cert (semi-colon separated)
-            resourcegroup: "<Change_Me>"                # the resource group of the KeyVault
-            subscriptionid: "<Change_Me>"               # the subscription ID of the KeyVault
-            tenantid: "<Change_Me>"                     # the tenant ID of the KeyVault
+            usepodidentity: "false"
+            keyvaultname: "<KeyVault Name>"                         # the name of the KeyVault
+            keyvaultobjectnames: secret1;secret2                    # list of KeyVault object names (semi-colon separated)
+            keyvaultobjecttypes: secret;secret                      # list of KeyVault object types: secret, key or cert (semi-colon separated)
+            resourcegroup: "<KeyVault ResourceGroup>"               # the resource group of the KeyVault
+            subscriptionid: "<Subscription ID>"                     # the subscription ID of the KeyVault
+            tenantid: "<Tenant/Directory ID>"                       # the tenant ID of the KeyVault
+

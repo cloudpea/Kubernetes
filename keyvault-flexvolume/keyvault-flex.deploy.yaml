@@ -11,9 +11,10 @@ metadata:
   name: kvcreds
   namespace: default
 data:
-  # Requires Base64 Encoded Values
-  clientid: PENoYW5nZV9NZT4=
-  clientsecret: PENoYW5nZV9NZT4=
+  # Requires Updated Base64 Encoded Values
+  clientid: <Service Principal Application ID>
+  clientsecret: <Service Principal Application Secret>
+
 
 ---
 
@@ -55,3 +56,4 @@ spec:
         name: volplugins
       nodeSelector:
         beta.kubernetes.io/os: linux
+
