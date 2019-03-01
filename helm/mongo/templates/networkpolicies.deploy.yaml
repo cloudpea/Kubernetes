@@ -1,0 +1,198 @@
+
+#
+# Deploy the network policies for API and DB within the Kubernetes Cluster.
+#
+
+# ------------------- NetworkPolicies ------------------- #
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kubedns-allow-mongo
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector: 
+    matchLabels:
+      app: mongo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.10/32
+  - ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.10/32    
+  - ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mgob-slack
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: mongo-backup
+  policyTypes:
+    - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+  - ports:
+    - protocol: TCP
+      port: 443
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongo-k8s-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: mongo
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mgob-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: mongo-backup
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          environment: {{ .Release.Namespace }}
+    - podSelector:
+        matchLabels:
+          app: mongo
+    ports:
+    - protocol: TCP
+      port: 8090
+    - protocol: TCP
+      port: 27017
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          environment: {{ .Release.Namespace }}
+    - podSelector:
+        matchLabels:
+          app: mongo
+    ports:
+    - protocol: TCP
+      port: 8090
+    - protocol: TCP
+      port: 27017
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongo-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: mongo
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          environment: {{ .Release.Namespace }}
+    - podSelector:
+        matchLabels:
+          app: mongo-backup
+    ports:
+    - protocol: TCP
+      port: 8090
+    - protocol: TCP
+      port: 27017
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          environment: {{ .Release.Namespace }}
+    - podSelector:
+        matchLabels:
+          app: mongo-backup
+    ports:
+    - protocol: TCP
+      port: 8090
+    - protocol: TCP
+      port: 27017
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongo-replication
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: mongo
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          environment: {{ .Release.Namespace }}
+    - podSelector:
+        matchLabels:
+          app: mongo
+    ports:
+    - protocol: TCP
+      port: 27017
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          environment: {{ .Release.Namespace }}
+    - podSelector:
+        matchLabels:
+          app: mongo
+    ports:
+    - protocol: TCP
+      port: 27017

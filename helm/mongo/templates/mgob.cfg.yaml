@@ -1,0 +1,26 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  labels:
+    app: mongo-backup
+  name: mgob-config
+data:
+  {{ .Values.databaseName }}-{{ .Release.Namespace }}.yaml: |
+    target:
+      host: "mongo-0.mongo-svc.{{ .Release.Namespace }}.svc.cluster.local,mongo-1.mongo-svc.{{ .Release.Namespace }}.svc.cluster.local"
+      port: 27017
+      database: {{ .Values.databaseName }}
+    scheduler:
+      cron: "0 0 * * *"
+      retention: 7
+      timeout: 60
+    azure:
+      containerName: {{ .Values.storageContainer }}
+      connectionString: {{ .Values.storageConnection }}
+    slack:
+      url: https://hooks.slack.com/services/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
+      channel: devops-alerts
+      username: mgob
+      # 'true' to notify only on failures 
+      warnOnly: true

@@ -1,0 +1,50 @@
+
+#
+# Deploy the network policies for Core Services within the Kubernetes Cluster.
+#
+
+# ------------------- NetworkPolicies ------------------- #
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kubedns-dns-all
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.10/32
+  - ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  egress:
+  - ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-validation
+  namespace: default
+spec:
+  podSelector:
+    matchExpressions: # Look for the labels but ignore their contents
+    - {key: certmanager.k8s.io/acme-http-domain, operator: Exists}
+    - {key: certmanager.k8s.io/acme-http-token, operator: Exists}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: # allow from anywhere inside the cluster or on the internet
+  - from: []

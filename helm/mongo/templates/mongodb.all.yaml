@@ -1,0 +1,110 @@
+#
+# Deploy the back end databse in Kubernetes, as StatefulSet with a volume claim
+#
+
+# ------------------- SidecarAccount ------------------- #
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: "{{ .Release.Namespace }}-default-view"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{ .Release.Namespace }}
+
+---
+
+# ------------------- Service ------------------- #
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: mongo-svc
+  labels:
+    name: mongo-svc
+spec:
+  ports:
+  - protocol: TCP
+    port: 27017
+    targetPort: 27017
+  clusterIP: None
+  selector:
+    app: mongo
+
+---
+
+# ------------------- StatefulSet ------------------- #
+
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: mongo
+  labels:
+    app: mongo
+    role: database
+spec:
+  serviceName: mongo-svc
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+        role: database
+    spec:
+      terminationGracePeriodSeconds: 10
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - mongo
+            topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mongo
+        image: mongo:3.6
+        command:
+          - mongod
+          - "--replSet"
+          - rs0
+          - "--bind_ip"
+          - 0.0.0.0
+
+          - "--smallfiles"
+          - "--noprealloc"
+        ports:
+          - containerPort: 27017
+        volumeMounts:
+          - name: mongo-persistent-storage
+            mountPath: /data/db
+      - name: mongo-sidecar
+        image: cvallance/mongo-k8s-sidecar
+        env:
+          - name: MONGO_SIDECAR_POD_LABELS
+            value: "app=mongo"
+          - name: KUBERNETES_MONGO_SERVICE_NAME
+            value: "mongo-svc"
+          - name: KUBE_NAMESPACE
+            value: {{ .Release.Namespace }}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-persistent-storage
+        annotations:
+          volume.beta.kubernetes.io/storage-class: azure-premium
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 32Gi

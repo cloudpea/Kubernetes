@@ -1,0 +1,19 @@
+#
+# Deploy the ClusterIssuer within the Kubernetes Cluster.
+#
+
+# ------------------- ClusterIssuer ------------------- #
+
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: ClusterIssuer
+metadata:
+  name: lets-encrypt
+  namespace: kube-system
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    # !CHANGE THIS! To your organisations email address.
+    email: ryanfroggatt123@gmail.com
+    privateKeySecretRef:
+      name: tls-secret
+    http01: {}
